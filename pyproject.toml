@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "taskiq-psqlpy"
 version = "0.1.0"
-description = "NATS integration for taskiq"
+description = "PSQLPy and PostgreSQL integration for taskiq"
 authors = ["taskiq-team <taskiq@norely.com>"]
 readme = "README.md"
 packages = [{ include = "taskiq_psqlpy" }]

@@ -2,8 +2,10 @@ import pickle
 from typing import Any, Final, Literal, TypeVar, cast
 
 from psqlpy import PSQLPool
+from psqlpy.exceptions import RustPSQLDriverPyBaseError
 from taskiq import AsyncResultBackend, TaskiqResult
 
+from taskiq_psqlpy.exceptions import ResultIsMissingError
 from taskiq_psqlpy.queries import (
     CREATE_INDEX_QUERY,
     CREATE_TABLE_QUERY,
@@ -120,15 +122,20 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
         :return: TaskiqResult.
         """
         connection: Final = await self._database_pool.connection()
-        result_in_bytes = cast(
-            bytes,
-            await connection.fetch_val(
-                querystring=SELECT_RESULT_QUERY.format(
-                    self.table_name,
+        try:
+            result_in_bytes = cast(
+                bytes,
+                await connection.fetch_val(
+                    querystring=SELECT_RESULT_QUERY.format(
+                        self.table_name,
+                    ),
+                    parameters=[task_id],
                 ),
-                parameters=[task_id],
-            ),
-        )
+            )
+        except RustPSQLDriverPyBaseError as exc:
+            raise ResultIsMissingError(
+                f"Cannot find record with task_id = {task_id} in PostgreSQL",
+            ) from exc
 
         if not self.keep_results:
             await self._database_pool.execute(

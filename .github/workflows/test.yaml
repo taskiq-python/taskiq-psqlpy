@@ -31,6 +31,13 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
+      - name: Set up PostgreSQL
+        uses: ikalnytskyi/action-setup-postgres@v4
+        with:
+          username: postgres
+          password: postgres
+          database: taskiqpsqlpy
+        id: postgres
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -43,12 +50,6 @@ jobs:
         run: poetry install
         env:
           POETRY_VIRTUALENVS_CREATE: false
-      - name: Update docker-compose
-        uses: KengoTODA/actions-setup-docker-compose@v1
-        with:
-          version: "2.16.0"
-      - name: docker compose up
-        run: docker-compose up -d --wait
       - name: Run pytest check
         run: poetry run pytest -vv -n auto --cov="taskiq_psqlpy" .
       - name: Generate report

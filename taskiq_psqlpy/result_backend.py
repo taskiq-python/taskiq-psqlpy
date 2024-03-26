@@ -1,5 +1,5 @@
 import pickle
-from typing import Any, Final, Literal, TypeVar, cast
+from typing import Any, Final, Literal, Optional, TypeVar, cast
 
 from psqlpy import PSQLPool
 from psqlpy.exceptions import RustPSQLDriverPyBaseError
@@ -23,7 +23,7 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
 
     def __init__(
         self,
-        dsn: str = "postgres://postgres:postgres@localhost:5432/postgres",
+        dsn: Optional[str] = "postgres://postgres:postgres@localhost:5432/postgres",
         keep_results: bool = True,
         table_name: str = "taskiq_results",
         field_for_task_id: Literal["VarChar", "Text"] = "VarChar",

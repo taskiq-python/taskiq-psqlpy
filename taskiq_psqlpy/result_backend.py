@@ -7,8 +7,8 @@ from taskiq import AsyncResultBackend, TaskiqResult
 
 from taskiq_psqlpy.exceptions import ResultIsMissingError
 from taskiq_psqlpy.queries import (
-    CREATE_INDEX_QUERY,
-    CREATE_TABLE_QUERY,
+    CREATE_RESULT_BACKEND_INDEX_QUERY,
+    CREATE_RESULT_BACKEND_TABLE_QUERY,
     DELETE_RESULT_QUERY,
     INSERT_RESULT_QUERY,
     IS_RESULT_EXISTS_QUERY,
@@ -33,6 +33,7 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
 
         :param dsn: connection string to PostgreSQL.
         :param keep_results: flag to not remove results from Redis after reading.
+        :param table_name: name of the table for taskiq results.
         :param connect_kwargs: additional arguments for nats `PSQLPool` class.
         """
         self.dsn: Final = dsn
@@ -54,13 +55,13 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
             **self.connect_kwargs,
         )
         await self._database_pool.execute(
-            querystring=CREATE_TABLE_QUERY.format(
+            querystring=CREATE_RESULT_BACKEND_TABLE_QUERY.format(
                 self.table_name,
                 self.field_for_task_id,
             ),
         )
         await self._database_pool.execute(
-            querystring=CREATE_INDEX_QUERY.format(
+            querystring=CREATE_RESULT_BACKEND_INDEX_QUERY.format(
                 self.table_name,
                 self.table_name,
             ),

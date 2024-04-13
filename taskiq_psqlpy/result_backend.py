@@ -1,7 +1,7 @@
 import pickle
 from typing import Any, Final, Literal, Optional, TypeVar, cast
 
-from psqlpy import PSQLPool
+from psqlpy import ConnectionPool
 from psqlpy.exceptions import RustPSQLDriverPyBaseError
 from taskiq import AsyncResultBackend, TaskiqResult
 
@@ -33,7 +33,7 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
 
         :param dsn: connection string to PostgreSQL.
         :param keep_results: flag to not remove results from Redis after reading.
-        :param connect_kwargs: additional arguments for nats `PSQLPool` class.
+        :param connect_kwargs: additional arguments for nats `ConnectionPool` class.
         """
         self.dsn: Final = dsn
         self.keep_results: Final = keep_results
@@ -41,7 +41,7 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
         self.field_for_task_id: Final = field_for_task_id
         self.connect_kwargs: Final = connect_kwargs
 
-        self._database_pool: PSQLPool
+        self._database_pool: ConnectionPool
 
     async def startup(self) -> None:
         """Initialize the result backend.
@@ -49,7 +49,7 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
         Construct new connection pool
         and create new table for results if not exists.
         """
-        self._database_pool = PSQLPool(
+        self._database_pool = ConnectionPool(
             dsn=self.dsn,
             **self.connect_kwargs,
         )
@@ -68,7 +68,7 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
 
     async def shutdown(self) -> None:
         """Close the connection pool."""
-        await self._database_pool.close()
+        self._database_pool.close()
 
     async def set_result(
         self,

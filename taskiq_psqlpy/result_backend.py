@@ -123,15 +123,16 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
         """
         connection: Final = await self._database_pool.connection()
         try:
-            result_in_bytes = cast(
-                bytes,
-                await connection.fetch_val(
+            result_in_bytes: bytes | list =                 await connection.fetch_val(
                     querystring=SELECT_RESULT_QUERY.format(
                         self.table_name,
                     ),
                     parameters=[task_id],
                 ),
-            )
+            
+            if isinstance(result_in_bytes, list):
+                result_in_bytes = bytes(result_in_bytes)
+                
         except RustPSQLDriverPyBaseError as exc:
             raise ResultIsMissingError(
                 f"Cannot find record with task_id = {task_id} in PostgreSQL",

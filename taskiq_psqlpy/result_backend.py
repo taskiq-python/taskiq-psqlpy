@@ -1,5 +1,12 @@
 import pickle
-from typing import Any, Final, Literal, Optional, TypeVar, cast
+from typing import (
+    Any,
+    Final,
+    Literal,
+    Optional,
+    TypeVar,
+    cast,
+)
 
 from psqlpy import ConnectionPool
 from psqlpy.exceptions import RustPSQLDriverPyBaseError
@@ -123,14 +130,11 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
         """
         connection: Final = await self._database_pool.connection()
         try:
-            result_in_bytes = cast(
-                bytes,
-                await connection.fetch_val(
-                    querystring=SELECT_RESULT_QUERY.format(
-                        self.table_name,
-                    ),
-                    parameters=[task_id],
+            result_in_bytes: Final[bytes] = await connection.fetch_val(
+                querystring=SELECT_RESULT_QUERY.format(
+                    self.table_name,
                 ),
+                parameters=[task_id],
             )
         except RustPSQLDriverPyBaseError as exc:
             raise ResultIsMissingError(

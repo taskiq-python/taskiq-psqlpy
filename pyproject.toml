@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "taskiq-psqlpy"
-version = "0.1.2"
+version = "0.1.3"
 description = "PSQLPy and PostgreSQL integration for taskiq"
 authors = ["taskiq-team <taskiq@norely.com>"]
 readme = "README.md"

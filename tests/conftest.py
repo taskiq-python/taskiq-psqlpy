@@ -45,7 +45,7 @@ def postgresql_dsn() -> str:
     """
     return (
         os.environ.get("POSTGRESQL_URL")
-        or "postgresql://akiselev:12345@localhost:5432/taskiqpsqlpy"
+        or "postgresql://postgres:postgres@localhost:5432/taskiqpsqlpy"
     )
 
 

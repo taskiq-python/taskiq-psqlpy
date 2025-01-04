@@ -2,6 +2,7 @@ import uuid
 from typing import Any, TypeVar
 
 import pytest
+from pydantic import BaseModel
 from taskiq import TaskiqResult
 
 from taskiq_psqlpy.exceptions import ResultIsMissingError
@@ -11,12 +12,10 @@ _ReturnType = TypeVar("_ReturnType")
 pytestmark = pytest.mark.anyio
 
 
-class ResultForTest:
+class ResultForTest(BaseModel):
     """Just test class for testing."""
 
-    def __init__(self) -> None:
-        """Generates test class for result testing."""
-        self.test_arg = uuid.uuid4()
+    test_arg: str = uuid.uuid4().hex
 
 
 @pytest.fixture
@@ -137,7 +136,7 @@ async def test_success_backend_custom_result(
     result = await psqlpy_result_backend.get_result(task_id=task_id)
 
     assert (
-        result.return_value.test_arg  # type: ignore
+        result.return_value["test_arg"]  # type: ignore
         == custom_taskiq_result.return_value.test_arg  # type: ignore
     )
     assert result.is_err == custom_taskiq_result.is_err
@@ -158,3 +157,41 @@ async def test_success_backend_is_result_ready(
     )
 
     assert await psqlpy_result_backend.is_result_ready(task_id=task_id)
+
+
+async def test_test_success_backend_custom_result_set_same_task_id(
+    psqlpy_result_backend: PSQLPyResultBackend[_ReturnType],
+    custom_taskiq_result: TaskiqResult[_ReturnType],
+    task_id: str,
+) -> None:
+    await psqlpy_result_backend.set_result(
+        task_id=task_id,
+        result=custom_taskiq_result,
+    )
+    result = await psqlpy_result_backend.get_result(task_id=task_id)
+
+    assert (
+        result.return_value["test_arg"]  # type: ignore
+        == custom_taskiq_result.return_value.test_arg  # type: ignore
+    )
+
+    await psqlpy_result_backend.set_result(
+        task_id=task_id,
+        result=custom_taskiq_result,
+    )
+
+    another_taskiq_res_uuid = uuid.uuid4().hex
+    another_taskiq_res = TaskiqResult(
+        is_err=False,
+        log=None,
+        return_value=ResultForTest(test_arg=another_taskiq_res_uuid),
+        execution_time=0.1,
+    )
+
+    await psqlpy_result_backend.set_result(
+        task_id=task_id,
+        result=another_taskiq_res,  # type: ignore[arg-type]
+    )
+    result = await psqlpy_result_backend.get_result(task_id=task_id)
+
+    assert result.return_value["test_arg"] == another_taskiq_res_uuid  # type: ignore

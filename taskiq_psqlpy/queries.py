@@ -11,6 +11,9 @@ CREATE INDEX IF NOT EXISTS {}_task_id_idx ON {} USING HASH (task_id)
 
 INSERT_RESULT_QUERY = """
 INSERT INTO {} VALUES ($1, $2)
+ON CONFLICT (task_id)
+DO UPDATE
+SET result = $2
 """
 
 IS_RESULT_EXISTS_QUERY = """

@@ -1,4 +1,3 @@
-import pickle
 from typing import (
     Any,
     Final,
@@ -11,6 +10,9 @@ from typing import (
 from psqlpy import ConnectionPool
 from psqlpy.exceptions import RustPSQLDriverPyBaseError
 from taskiq import AsyncResultBackend, TaskiqResult
+from taskiq.abc.serializer import TaskiqSerializer
+from taskiq.compat import model_dump, model_validate
+from taskiq.serializers import PickleSerializer
 
 from taskiq_psqlpy.exceptions import ResultIsMissingError
 from taskiq_psqlpy.queries import (
@@ -34,12 +36,16 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
         keep_results: bool = True,
         table_name: str = "taskiq_results",
         field_for_task_id: Literal["VarChar", "Text"] = "VarChar",
+        serializer: Optional[TaskiqSerializer] = None,
         **connect_kwargs: Any,
     ) -> None:
         """Construct new result backend.
 
         :param dsn: connection string to PostgreSQL.
         :param keep_results: flag to not remove results from Redis after reading.
+        :param table_name: name of the table to store results.
+        :param field_for_task_id: type of the field to store task_id.
+        :param serializer: serializer class to serialize/deserialize result from task.
         :param connect_kwargs: additional arguments for nats `ConnectionPool` class.
         """
         self.dsn: Final = dsn
@@ -47,6 +53,7 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
         self.table_name: Final = table_name
         self.field_for_task_id: Final = field_for_task_id
         self.connect_kwargs: Final = connect_kwargs
+        self.serializer = serializer or PickleSerializer()
 
         self._database_pool: ConnectionPool
 
@@ -93,7 +100,7 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
             ),
             parameters=[
                 task_id,
-                pickle.dumps(result),
+                self.serializer.dumpb(model_dump(result)),
             ],
         )
 
@@ -149,8 +156,9 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
                 parameters=[task_id],
             )
 
-        taskiq_result: Final = pickle.loads(  # noqa: S301
-            result_in_bytes,
+        taskiq_result: Final = model_validate(
+            TaskiqResult[_ReturnType],
+            self.serializer.loadb(result_in_bytes),
         )
 
         if not with_logs:

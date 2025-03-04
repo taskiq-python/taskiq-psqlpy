@@ -29,7 +29,7 @@ keywords = [
 
 [tool.poetry.dependencies]
 python = "^3.8.1"
-psqlpy = "^0.8.7"
+psqlpy = "^0.9.3"
 taskiq = "^0.11.10"
 
 [tool.poetry.group.dev.dependencies]

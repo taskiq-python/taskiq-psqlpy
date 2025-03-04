@@ -5,6 +5,7 @@ from typing import AsyncGenerator, TypeVar
 
 import pytest
 
+from taskiq_psqlpy.broker import PSQLPyBroker
 from taskiq_psqlpy.result_backend import PSQLPyResultBackend
 
 _ReturnType = TypeVar("_ReturnType")
@@ -30,7 +31,7 @@ def postgres_table() -> str:
     """
     return "".join(
         random.choice(
-            string.ascii_uppercase,
+            string.ascii_lowercase,
         )
         for _ in range(10)
     )
@@ -60,7 +61,33 @@ async def psqlpy_result_backend(
     )
     await backend.startup()
     yield backend
-    await backend._database_pool.execute(
-        querystring=f"DROP TABLE {postgres_table}",
-    )
+    async with backend._database_pool.acquire() as conn:
+        _ = await conn.execute(
+            querystring=f"DROP TABLE {postgres_table}",
+        )
     await backend.shutdown()
+
+
+@pytest.fixture()
+async def psqlpy_broker(
+    postgresql_dsn: str,
+    postgres_table: str,
+) -> AsyncGenerator[PSQLPyBroker, None]:
+    """
+    Fixture to set up and tear down the broker.
+
+    Initializes the broker with test parameters.
+    """
+    broker = PSQLPyBroker(
+        dsn=postgresql_dsn,
+        channel_name=f"{postgres_table}_channel",
+        table_name=postgres_table,
+    )
+    await broker.startup()
+
+    yield broker
+
+    assert broker.write_pool
+    async with broker.write_pool.acquire() as conn:
+        _ = await conn.execute(f"DROP TABLE {postgres_table}")
+    await broker.shutdown()

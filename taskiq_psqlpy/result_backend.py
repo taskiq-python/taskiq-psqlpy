@@ -67,13 +67,14 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
             dsn=self.dsn,
             **self.connect_kwargs,
         )
-        await self._database_pool.execute(
+        connection = await self._database_pool.connection()
+        await connection.execute(
             querystring=CREATE_TABLE_QUERY.format(
                 self.table_name,
                 self.field_for_task_id,
             ),
         )
-        await self._database_pool.execute(
+        await connection.execute(
             querystring=CREATE_INDEX_QUERY.format(
                 self.table_name,
                 self.table_name,
@@ -94,7 +95,8 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
         :param task_id: ID of the task.
         :param result: result of the task.
         """
-        await self._database_pool.execute(
+        connection = await self._database_pool.connection()
+        await connection.execute(
             querystring=INSERT_RESULT_QUERY.format(
                 self.table_name,
             ),
@@ -149,7 +151,7 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
             ) from exc
 
         if not self.keep_results:
-            await self._database_pool.execute(
+            await connection.execute(
                 querystring=DELETE_RESULT_QUERY.format(
                     self.table_name,
                 ),

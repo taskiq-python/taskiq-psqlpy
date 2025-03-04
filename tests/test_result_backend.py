@@ -89,7 +89,8 @@ async def test_success_backend_default_result_delete_res(
     with pytest.raises(expected_exception=ResultIsMissingError):
         await backend.get_result(task_id=task_id)
 
-    await backend._database_pool.execute(
+    connection = await backend._database_pool.connection()
+    await connection.execute(
         querystring=f"DROP TABLE {postgres_table}",
     )
 

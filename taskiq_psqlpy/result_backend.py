@@ -8,7 +8,8 @@ from typing import (
 )
 
 from psqlpy import ConnectionPool
-from psqlpy.exceptions import RustPSQLDriverPyBaseError
+from psqlpy._internal.exceptions import InterfaceError
+from psqlpy.exceptions import DatabaseError
 from taskiq import AsyncResultBackend, TaskiqResult
 from taskiq.abc.serializer import TaskiqSerializer
 from taskiq.compat import model_dump, model_validate
@@ -67,18 +68,20 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
             dsn=self.dsn,
             **self.connect_kwargs,
         )
-        await self._database_pool.execute(
-            querystring=CREATE_TABLE_QUERY.format(
-                self.table_name,
-                self.field_for_task_id,
-            ),
-        )
-        await self._database_pool.execute(
-            querystring=CREATE_INDEX_QUERY.format(
-                self.table_name,
-                self.table_name,
-            ),
-        )
+        async with self._database_pool.acquire() as connection:
+            await connection.execute(
+                querystring=CREATE_TABLE_QUERY.format(
+                    self.table_name,
+                    self.field_for_task_id,
+                ),
+            )
+        async with self._database_pool.acquire() as connection:
+            await connection.execute(
+                querystring=CREATE_INDEX_QUERY.format(
+                    self.table_name,
+                    self.table_name,
+                ),
+            )
 
     async def shutdown(self) -> None:
         """Close the connection pool."""
@@ -94,15 +97,16 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
         :param task_id: ID of the task.
         :param result: result of the task.
         """
-        await self._database_pool.execute(
-            querystring=INSERT_RESULT_QUERY.format(
-                self.table_name,
-            ),
-            parameters=[
-                task_id,
-                self.serializer.dumpb(model_dump(result)),
-            ],
-        )
+        async with self._database_pool.acquire() as connection:
+            await connection.execute(
+                querystring=INSERT_RESULT_QUERY.format(
+                    self.table_name,
+                ),
+                parameters=[
+                    task_id,
+                    self.serializer.dumpb(model_dump(result)),
+                ],
+            )
 
     async def is_result_ready(self, task_id: str) -> bool:
         """Returns whether the result is ready.
@@ -135,26 +139,27 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
         :raises ResultIsMissingError: if there is no result when trying to get it.
         :return: TaskiqResult.
         """
-        connection: Final = await self._database_pool.connection()
         try:
-            result_in_bytes: Final[bytes] = await connection.fetch_val(
-                querystring=SELECT_RESULT_QUERY.format(
-                    self.table_name,
-                ),
-                parameters=[task_id],
-            )
-        except RustPSQLDriverPyBaseError as exc:
+            async with self._database_pool.acquire() as connection:
+                result_in_bytes: Final[bytes] = await connection.fetch_val(
+                    querystring=SELECT_RESULT_QUERY.format(
+                        self.table_name,
+                    ),
+                    parameters=[task_id],
+                )
+        except (DatabaseError, InterfaceError) as exc:
             raise ResultIsMissingError(
                 f"Cannot find record with task_id = {task_id} in PostgreSQL",
             ) from exc
 
         if not self.keep_results:
-            await self._database_pool.execute(
-                querystring=DELETE_RESULT_QUERY.format(
-                    self.table_name,
-                ),
-                parameters=[task_id],
-            )
+            async with self._database_pool.acquire() as conn:
+                await conn.execute(
+                    querystring=DELETE_RESULT_QUERY.format(
+                        self.table_name,
+                    ),
+                    parameters=[task_id],
+                )
 
         taskiq_result: Final = model_validate(
             TaskiqResult[_ReturnType],

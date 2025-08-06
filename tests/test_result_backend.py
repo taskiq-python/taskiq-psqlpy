@@ -89,9 +89,10 @@ async def test_success_backend_default_result_delete_res(
     with pytest.raises(expected_exception=ResultIsMissingError):
         await backend.get_result(task_id=task_id)
 
-    await backend._database_pool.execute(
-        querystring=f"DROP TABLE {postgres_table}",
-    )
+    async with backend._database_pool.acquire() as connection:
+        await connection.execute(
+            querystring=f"DROP TABLE {postgres_table}",
+        )
 
     await backend.shutdown()
 
@@ -106,7 +107,6 @@ async def test_success_backend_default_result(
 
     :param default_taskiq_result: TaskiqResult with default result.
     :param task_id: ID for task.
-    :param nats_urls: urls to NATS.
     """
     await psqlpy_result_backend.set_result(
         task_id=task_id,
@@ -127,7 +127,6 @@ async def test_success_backend_custom_result(
 
     :param custom_taskiq_result: TaskiqResult with custom result.
     :param task_id: ID for task.
-    :param redis_url: url to redis.
     """
     await psqlpy_result_backend.set_result(
         task_id=task_id,

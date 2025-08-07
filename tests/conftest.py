@@ -60,7 +60,8 @@ async def psqlpy_result_backend(
     )
     await backend.startup()
     yield backend
-    await backend._database_pool.execute(
-        querystring=f"DROP TABLE {postgres_table}",
-    )
+    async with backend._database_pool.acquire() as connection:
+        await connection.execute(
+            querystring=f"DROP TABLE {postgres_table}",
+        )
     await backend.shutdown()

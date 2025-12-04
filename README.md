@@ -14,10 +14,10 @@ pip install taskiq-psqlpy
 ```
 
 Or using poetry:
+
 ```
 poetry add taskiq-psqlpy
 ```
-
 ## Usage
 Let's see the example with the redis broker and PostgreSQL PSQLPy result backend:
 ```python

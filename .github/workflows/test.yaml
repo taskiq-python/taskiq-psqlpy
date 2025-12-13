@@ -1,6 +1,17 @@
 name: Testing taskiq-psqlpy
 
-on: pull_request
+on:
+  pull_request:
+    paths-ignore:
+      - '*.md'
+  push:
+    paths-ignore:
+      - '*.md'
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
 
 jobs:
   lint:

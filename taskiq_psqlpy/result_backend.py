@@ -2,7 +2,6 @@ from typing import (
     Any,
     Final,
     Literal,
-    Optional,
     TypeVar,
     cast,
 )
@@ -33,11 +32,11 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
 
     def __init__(
         self,
-        dsn: Optional[str] = "postgres://postgres:postgres@localhost:5432/postgres",
+        dsn: str | None = "postgres://postgres:postgres@localhost:5432/postgres",
         keep_results: bool = True,
         table_name: str = "taskiq_results",
         field_for_task_id: Literal["VarChar", "Text"] = "VarChar",
-        serializer: Optional[TaskiqSerializer] = None,
+        serializer: TaskiqSerializer | None = None,
         **connect_kwargs: Any,
     ) -> None:
         """Construct new result backend.

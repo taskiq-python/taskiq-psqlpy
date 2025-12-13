@@ -1,7 +1,8 @@
 import os
 import random
 import string
-from typing import AsyncGenerator, TypeVar
+from collections.abc import AsyncGenerator
+from typing import TypeVar
 
 import pytest
 

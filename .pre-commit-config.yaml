@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.4.0
+    rev: v6.0.0
     hooks:
       - id: check-ast
       - id: trailing-whitespace
@@ -10,31 +10,32 @@ repos:
       - id: end-of-file-fixer
 
   - repo: https://github.com/asottile/add-trailing-comma
-    rev: v2.1.0
+    rev: v4.0.0
     hooks:
-      - id: add-trailing-comma
+    -   id: add-trailing-comma
 
   - repo: local
     hooks:
+      - id: black
+        name: Format with Black
+        entry: uv run black
+        language: system
+        types: [python]
+
       - id: ruff
         name: Run ruff lints
-        entry: poetry run ruff check
+        entry: uv run ruff
         language: system
         pass_filenames: false
-        types: [ python ]
+        types: [python]
         args:
+          - check
           - "--fix"
           - "taskiq_psqlpy"
           - "tests"
 
-      - id: black
-        name: Format with Black
-        entry: poetry run black
-        language: system
-        types: [ python ]
-
       - id: mypy
         name: Validate types with MyPy
-        entry: poetry run mypy
+        entry: uv run mypy
         language: system
         types: [ python ]

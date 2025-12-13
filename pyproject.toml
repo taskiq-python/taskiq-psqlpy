@@ -11,7 +11,6 @@ maintainers = [
 license = "MIT"
 license-files = ["LICENSE"]
 readme = "README.md"
-packages = [{ include = "taskiq_psqlpy" }]
 classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",

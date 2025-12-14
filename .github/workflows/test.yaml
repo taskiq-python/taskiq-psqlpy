@@ -2,9 +2,11 @@ name: Testing taskiq-psqlpy
 
 on:
   pull_request:
+    branches: [ main ]
     paths-ignore:
       - '*.md'
   push:
+    branches: [ main ]
     paths-ignore:
       - '*.md'
 
@@ -46,7 +48,7 @@ jobs:
           username: taskiq_psqlpy
           password: look_in_vault
           database: taskiq_psqlpy
-          postgres-version: "${{ postgres-version }}"
+          postgres-version: "${{ matrix.postgres_version }}"
         id: postgres
       - name: Set up uv and enable cache
         id: setup-uv

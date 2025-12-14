@@ -32,7 +32,9 @@ class PSQLPyResultBackend(AsyncResultBackend[_ReturnType]):
 
     def __init__(
         self,
-        dsn: str | None = "postgres://postgres:postgres@localhost:5432/postgres",
+        dsn: (
+            str | None
+        ) = "postgresql://taskiq_psqlpy:look_in_vault@localhost:5432/taskiq_psqlpy",
         keep_results: bool = True,
         table_name: str = "taskiq_results",
         field_for_task_id: Literal["VarChar", "Text"] = "VarChar",

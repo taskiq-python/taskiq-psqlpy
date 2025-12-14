@@ -36,6 +36,7 @@ jobs:
     strategy:
       matrix:
         py_version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        postgres_version: [ "16", "17", "18" ]
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v5
@@ -45,6 +46,7 @@ jobs:
           username: taskiq_psqlpy
           password: look_in_vault
           database: taskiq_psqlpy
+          postgres-version: "${{ postgres-version }}"
         id: postgres
       - name: Set up uv and enable cache
         id: setup-uv

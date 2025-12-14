@@ -42,13 +42,15 @@ dev = [
     {include-group = "lint"},
     {include-group = "test"},
     "pre-commit>=4.5.0",
-    "anyio>=4.12.0",
 ]
 test = [
     "pytest>=9.0.1",
     "pytest-cov>=7.0.0",
     "pytest-env>=1.2.0",
     "pytest-xdist>=3.8.0",
+    "pytest-asyncio>=1.3.0",
+    "polyfactory>=3.1.0",
+    "sqlalchemy-utils>=0.42.1",
 ]
 lint = [
     "black>=25.11.0",
@@ -80,7 +82,7 @@ module-root = ""
 module-name = "taskiq_psqlpy"
 
 [tool.ruff]
-line-length = 88
+line-length = 120
 
 [tool.ruff.lint]
 # List of enabled rulsets.
@@ -147,3 +149,14 @@ allow-magic-value-types = ["int", "str", "float"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["taskiq_dependencies.Depends", "taskiq.TaskiqDepends"]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "unit: marks unit tests",
+    "integration: marks tests with real infrastructure env",
+]

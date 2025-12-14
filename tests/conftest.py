@@ -11,17 +11,6 @@ from taskiq_psqlpy.result_backend import PSQLPyResultBackend
 _ReturnType = TypeVar("_ReturnType")
 
 
-@pytest.fixture(scope="session")
-def anyio_backend() -> str:
-    """
-    Anyio backend.
-
-    Backend for anyio pytest plugin.
-    :return: backend name.
-    """
-    return "asyncio"
-
-
 @pytest.fixture
 def postgres_table() -> str:
     """
@@ -46,11 +35,11 @@ def postgresql_dsn() -> str:
     """
     return (
         os.environ.get("POSTGRESQL_URL")
-        or "postgresql://postgres:postgres@localhost:5432/taskiqpsqlpy"
+        or "postgresql://taskiq_psqlpy:look_in_vault@localhost:5432/taskiq_psqlpy"
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 async def psqlpy_result_backend(
     postgresql_dsn: str,
     postgres_table: str,
